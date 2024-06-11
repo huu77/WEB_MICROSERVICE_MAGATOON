@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.container {
+  width: 1030px;
+  margin: 0 auto;
+}
+ /* npx tailwindcss -i ./src/index.css -o ./index.css --watch */

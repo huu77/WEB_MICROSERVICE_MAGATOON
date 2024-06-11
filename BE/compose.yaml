@@ -1,0 +1,205 @@
+services:
+  api-gateway:
+    container_name: api-gateway
+    restart: always
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - story-api
+      - comment-api
+      - user_server
+      - payment_server
+    networks:
+      - mangatoon-network
+
+  story-api:
+    container_name: story-api
+    restart: always
+    build:
+      context: ./story-api
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - story_uploads:/story-api/uploads
+      - ./volumes/story_uploads:/story-api/uploads
+      - ./story-api/src:/story-api/src
+    depends_on:
+      - story-db
+      - story-redis
+      - rabbitmq
+    networks:
+      - mangatoon-network
+
+  story-db:
+    container_name: story-db
+    restart: always
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_DATABASE: story_db
+      MYSQL_USER: datnmptit
+      MYSQL_PASSWORD: 12345678
+    ports:
+      - "33061:3306"
+    volumes:
+      - story_db:/var/lib/mysql
+      - ./volumes/story_db:/var/lib/mysql
+    networks:
+      - mangatoon-network
+
+  story-redis:
+    container_name: story-redis
+    image: bitnami/redis:latest
+    restart: always
+    ports:
+      - "16379:6379"
+    environment:
+      - REDIS_PASSWORD=12345678
+      - REDIS_PORT_NUMBER=6379
+    volumes:
+      - story_redis_data:/bitnami/redis/data
+      - ./volumes/story_redis_data:/bitnami/redis/data
+    networks:
+      - mangatoon-network
+
+  comment-api:
+    container_name: comment-api
+    restart: always
+    build:
+      context: ./comment-api
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./comment-api/src:/comment-api/src
+    depends_on:
+      - comment-db
+      - comment-redis
+      - rabbitmq
+    networks:
+      - mangatoon-network
+
+  comment-db:
+    container_name: comment-db
+    restart: always
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_DATABASE: comment_db
+      MYSQL_USER: datnmptit
+      MYSQL_PASSWORD: 12345678
+    ports:
+      - "13307:3306"
+    volumes:
+      - comment_db:/var/lib/mysql
+      - ./volumes/comment_db:/var/lib/mysql
+    networks:
+      - mangatoon-network
+
+  comment-redis:
+    container_name: comment-redis
+    image: bitnami/redis:latest
+    restart: always
+    ports:
+      - "16380:6379"
+    environment:
+      - REDIS_PASSWORD=12345678
+      - REDIS_PORT_NUMBER=6379
+    volumes:
+      - comment_redis_data:/bitnami/redis/data
+      - ./volumes/comment_redis_data:/bitnami/redis/data
+    networks:
+      - mangatoon-network
+
+  user_server:
+    build:
+      context: ./user-server
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    restart: always
+    volumes:
+      - ./user-server/src:/usr/src/app/src
+    depends_on:
+      - auth_database
+      - rabbitmq
+    networks:
+      - mangatoon-network
+
+  auth_database:
+    container_name: auth_database
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: auth_database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 123456
+    ports:
+      - "13006:3306"
+    volumes:
+      - auth_database:/var/lib/mysql
+      - ./volumes/auth_database:/var/lib/mysql
+    networks:
+      - mangatoon-network
+
+  payment_server:
+    build:
+      context: ./payment-server
+      dockerfile: Dockerfile
+    ports:
+      - "3333:3333"
+    restart: always
+    volumes:
+      - ./payment-server/src:/usr/src/app/src
+    depends_on:
+      - payment_database
+      - rabbitmq
+    networks:
+      - mangatoon-network
+
+  payment_database:
+    container_name: payment_database
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: payment_database
+      MYSQL_USER: prisma
+      MYSQL_PASSWORD: 123456
+    ports:
+      - "13008:3306"
+    volumes:
+      - payment_database:/var/lib/mysql
+      - ./volumes/payment_database:/var/lib/mysql
+    networks:
+      - mangatoon-network
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management-alpine
+    restart: always
+    environment:
+      RABBITMQ_NODE_PORT: 5672
+      RABBITMQ_DEFAULT_USER: datnmptit
+      RABBITMQ_DEFAULT_PASS: 12345678
+    ports:
+      - "15672:5672"
+    networks:
+      - mangatoon-network
+
+volumes:
+  story_uploads:
+  story_db:
+  story_redis_data:
+  comment_db:
+  comment_redis_data:
+  auth_database:
+  payment_database:
+
+networks:
+  mangatoon-network:

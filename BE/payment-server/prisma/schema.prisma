@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model invoice {
+  id       Int
+  storyId  Int
+  createAt DateTime @default(now()) @db.DateTime(0)
+
+  @@id([id, storyId])
+}
+
+model sevicepackage {
+  id                       Int                        @id @default(autoincrement())
+  name                     String                     @db.VarChar(30)
+  description              String                     @db.VarChar(200)
+  expiration               Int                        @db.Int
+  sevicepackageprice       sevicepackageprice[]
+  sevicepackagetransaction sevicepackagetransaction[]
+}
+
+model sevicepackageprice {
+  id               Int           @id @default(autoincrement())
+  price            Float         @db.Float
+  startTime        DateTime      @db.DateTime(0)
+  createAt         DateTime      @default(now()) @db.DateTime(0)
+  servicePackageID Int
+  sevicepackage    sevicepackage @relation(fields: [servicePackageID], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_service_package")
+
+  @@index([servicePackageID], map: "fk_service_package_idx")
+}
+
+model sevicepackagetransaction {
+  SevicePackageId Int
+  userId          Int
+  createAt        DateTime      @default(now()) @db.DateTime(0)
+  sevicepackage   sevicepackage @relation(fields: [SevicePackageId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_id_service_package")
+
+  @@id([SevicePackageId, userId])
+}
+
+model wallet {
+  id      Int   @id
+  balance Float @default(0) @db.Float
+}
+
+model walletrechargetransaction {
+  id       Int      @id @default(autoincrement())
+  amount   Float    @default(0) @db.Float
+  createAt DateTime @default(now()) @db.DateTime(0)
+  userId   Int
+}

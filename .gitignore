@@ -1,0 +1,5 @@
+# Ignore backend volumes
+BE/volumes/
+
+# Ignore frontend node_modules
+FE/node_modules/
